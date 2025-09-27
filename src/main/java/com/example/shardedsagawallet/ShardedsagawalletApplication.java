@@ -11,5 +11,4 @@ public class ShardedsagawalletApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ShardedsagawalletApplication.class, args);
 	}
-
 }

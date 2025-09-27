@@ -13,7 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-
     public User createUser(User user) {
         log.info("Creating user: {}", user.getEmail());
         User newUser = userRepository.save(user);
