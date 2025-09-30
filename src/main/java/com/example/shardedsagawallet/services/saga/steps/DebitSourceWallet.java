@@ -1,4 +1,4 @@
-package com.example.shardedsagawallet.services.steps;
+package com.example.shardedsagawallet.services.saga.steps;
 
 import com.example.shardedsagawallet.entities.Wallet;
 import com.example.shardedsagawallet.repositories.WalletRepository;
