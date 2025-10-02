@@ -4,7 +4,8 @@ public enum SagaStatus {
     STARTED,
     RUNNING,
     COMPLETED,
+    PENDING,
     FAILED,
-    COMPENSATING,
+    COMPENSATED_FAILED,
     COMPENSATED,
 }

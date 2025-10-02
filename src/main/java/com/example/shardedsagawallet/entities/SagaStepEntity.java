@@ -1,13 +1,6 @@
 package com.example.shardedsagawallet.entities;
 import com.example.shardedsagawallet.enums.StepStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "saga_step")
-public class SagaStep {
+public class SagaStepEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +18,10 @@ public class SagaStep {
 
     @Column(name = "saga_instance_id", nullable = false)
     private Long sagaInstanceId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "saga_instance_id", nullable = false)
+    private SagaInstance sagaInstance;
 
     @Column(name = "step_name", nullable = false)
     private String stepName;
@@ -38,4 +35,7 @@ public class SagaStep {
     // json step data
     @Column(name = "step_data", columnDefinition = "json")
     private String stepData;
+
+    @Column(nullable = false)
+    private int stepOrder;
 }

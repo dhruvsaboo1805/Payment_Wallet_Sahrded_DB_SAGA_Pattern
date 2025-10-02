@@ -1,5 +1,6 @@
 package com.example.shardedsagawallet.entities;
 import com.example.shardedsagawallet.enums.SagaStatus;
+import com.example.shardedsagawallet.services.saga.SagaContext;
 import org.apache.calcite.model.JsonType;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -24,7 +25,7 @@ import lombok.NoArgsConstructor;
 public class SagaInstance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -32,7 +33,7 @@ public class SagaInstance {
 
     @Type(JsonType.class)
     @Column(name = "context", columnDefinition = "json")
-    private String context;
+    private SagaContext context;
 
     @Column(name = "current_step", nullable = false)
     private String currentStep;

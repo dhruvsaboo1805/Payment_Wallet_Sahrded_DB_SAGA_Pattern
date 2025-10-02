@@ -48,4 +48,8 @@ public class SagaContext {
         }
         return null;
     }
+
+    public Map<String , Object> getStepNames() {
+        return data;
+    }
 }
