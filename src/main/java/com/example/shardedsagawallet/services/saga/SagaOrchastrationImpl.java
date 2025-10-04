@@ -6,6 +6,8 @@ import com.example.shardedsagawallet.enums.SagaStatus;
 import com.example.shardedsagawallet.enums.StepStatus;
 import com.example.shardedsagawallet.repositories.SagaInstanceRepository;
 import com.example.shardedsagawallet.repositories.SagaStepRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,18 +18,20 @@ import java.util.*;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class SagaOrchastrationService implements SagaOrchastration{
+public class SagaOrchastrationImpl implements SagaOrchastration{
+    private final ObjectMapper objectMapper;
     private final SagaInstanceRepository sagaInstanceRepository;
     private final SagaStepRepository sagaStepRepository;
     private final Map<String , SagaStep> stepsPerformer;
 
     @Override
     @Transactional
-    public Long startSaga(SagaContext context) {
+    public Long startSaga(SagaContext context) throws JsonProcessingException {
         // step1 -> create and save saga instance
         SagaInstance sagaInstance = new SagaInstance();
+        String contextJson = objectMapper.writeValueAsString(context);
         sagaInstance.setStatus(SagaStatus.STARTED);
-        sagaInstance.setContext(context);
+        sagaInstance.setContext(contextJson);
         SagaInstance savedSagaInstance = sagaInstanceRepository.save(sagaInstance);
         log.info("Saga instance saved: {}", savedSagaInstance);
 
@@ -53,7 +57,7 @@ public class SagaOrchastrationService implements SagaOrchastration{
 
     @Override
     @Transactional
-    public boolean executeStep(Long sagaInstanceId, String stepName) {
+    public boolean executeStep(Long sagaInstanceId, String stepName) throws JsonProcessingException {
         // step 1 -> find the step to be executed from map
         SagaStep sagaStepToBeExecuted = stepsPerformer.get(stepName);
         if (sagaStepToBeExecuted == null) {
@@ -61,16 +65,19 @@ public class SagaOrchastrationService implements SagaOrchastration{
         }
         log.info("Saga step which is to executed fetched successfully");
 
-        // step 2 -> execute the saga step using sagasteprepository
+        // step 2 -> execute the saga step using sagaStepRepository
         Optional<SagaStepEntity> step = sagaStepRepository.findByNameAndSagaInstanceId(stepName, sagaInstanceId);
 
         SagaInstance instance = getSagaInstance(sagaInstanceId);
-        SagaContext context = instance.getContext();
+        SagaContext sagaContextJson = objectMapper.readValue(instance.getContext() , SagaContext.class);
+        SagaContext context = sagaContextJson;
         try {
             boolean success = sagaStepToBeExecuted.execute(context);
             if (success) {
                 step.ifPresent(sagaStepEntity -> sagaStepEntity.setStatus(StepStatus.COMPLETED));
                 sagaStepRepository.save(step.get());
+                instance.setCurrentStep(stepName);
+                instance.setStatus(SagaStatus.RUNNING);
                 log.info("step with status {} executed successfully", StepStatus.COMPLETED);
                 return true;
             } else {
@@ -92,7 +99,7 @@ public class SagaOrchastrationService implements SagaOrchastration{
     }
     @Override
     @Transactional
-    public boolean compensateStep(Long sagaInstanceId, String stepName) {
+    public boolean compensateStep(Long sagaInstanceId, String stepName) throws JsonProcessingException {
         // step 1 -> find the step to be executed from map
         SagaStep sagaStepToBeCompensate = stepsPerformer.get(stepName);
         if (sagaStepToBeCompensate == null) {
@@ -105,12 +112,15 @@ public class SagaOrchastrationService implements SagaOrchastration{
         Optional<SagaStepEntity> step = sagaStepRepository.findByNameAndSagaInstanceId(stepName, sagaInstanceId);
 
         SagaInstance instance = getSagaInstance(sagaInstanceId);
-        SagaContext context = instance.getContext();
+        SagaContext sagaContextJson = objectMapper.readValue(instance.getContext() , SagaContext.class);
+        SagaContext context = sagaContextJson;
         try {
             boolean success = sagaStepToBeCompensate.compensate(context);
             if (success) {
                 step.ifPresent(sagaStepEntity -> sagaStepEntity.setStatus(StepStatus.COMPENSATED));
                 sagaStepRepository.save(step.get());
+                instance.setCurrentStep(stepName);
+                instance.setStatus(SagaStatus.COMPENSATED);
                 log.info("step with status {} compensated successfully", StepStatus.COMPENSATED);
                 return true;
             } else {
@@ -138,7 +148,7 @@ public class SagaOrchastrationService implements SagaOrchastration{
 
     @Override
     @Transactional
-    public void compensateSaga(Long sagaInstanceId) {
+    public void compensateSaga(Long sagaInstanceId) throws JsonProcessingException {
         // step 1 take instance object mark its status as compensating
         SagaInstance instance = new SagaInstance();
         instance.setStatus(SagaStatus.COMPENSATED);
@@ -178,3 +188,4 @@ public class SagaOrchastrationService implements SagaOrchastration{
         log.info("Saga instance {} completed successfully", instance.getId());
     }
 }
+

@@ -33,7 +33,7 @@ public class SagaInstance {
 
     @Type(JsonType.class)
     @Column(name = "context", columnDefinition = "json")
-    private SagaContext context;
+    private String context;
 
     @Column(name = "current_step", nullable = false)
     private String currentStep;
