@@ -173,10 +173,12 @@ public class SagaOrchastrationImpl implements SagaOrchastration{
     }
 
     @Override
-    public void failSaga(Long sagaInstanceId) {
+    public void failSaga(Long sagaInstanceId) throws JsonProcessingException {
         SagaInstance instance = getSagaInstance(sagaInstanceId);
         instance.setStatus(SagaStatus.FAILED);
         sagaInstanceRepository.save(instance);
+
+        compensateSaga(sagaInstanceId);
         log.info("Saga instance {} failed", instance.getId());
     }
 

@@ -14,7 +14,7 @@ public interface SagaOrchastration {
 
     void compensateSaga(Long sagaInstanceId) throws JsonProcessingException;
 
-    void failSaga(Long sagaInstanceId);
+    void failSaga(Long sagaInstanceId) throws JsonProcessingException;
 
     void completeSaga(Long sagaInstanceId);
 }
