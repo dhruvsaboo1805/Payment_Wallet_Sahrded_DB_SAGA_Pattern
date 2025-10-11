@@ -2,11 +2,13 @@ package com.example.shardedsagawallet.entities;
 import com.example.shardedsagawallet.enums.StepStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "saga_step")
@@ -18,10 +20,6 @@ public class SagaStepEntity {
 
     @Column(name = "saga_instance_id", nullable = false)
     private Long sagaInstanceId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "saga_instance_id", nullable = false)
-    private SagaInstance sagaInstance;
 
     @Column(name = "step_name", nullable = false)
     private String stepName;
@@ -36,6 +34,27 @@ public class SagaStepEntity {
     @Column(name = "step_data", columnDefinition = "json")
     private String stepData;
 
-    @Column(nullable = false)
-    private int stepOrder;
+    public void markAsCompensated() {
+        this.status = StepStatus.COMPENSATED;
+    }
+
+    public void markAsFailed() {
+        this.status = StepStatus.FAILED;
+    }
+
+    public void markAsPending() {
+        this.status = StepStatus.PENDING;
+    }
+
+    public void markAsRunning() {
+        this.status = StepStatus.RUNNING;
+    }
+
+    public void markAsCompleted() {
+        this.status = StepStatus.COMPLETED;
+    }
+
+    public void markAsCompensating() {
+        this.status = StepStatus.COMPENSATING;
+    }
 }

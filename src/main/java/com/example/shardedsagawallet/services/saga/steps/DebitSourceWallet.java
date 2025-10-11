@@ -71,6 +71,6 @@ public class DebitSourceWallet implements SagaStep {
 
     @Override
     public String getStepName() {
-        return "DebitSourceWallet";
+        return SagaStepFactory.SagaStepType.DEBIT_SOURCE_WALLET_STEP.toString();
     }
 }

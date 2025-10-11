@@ -8,4 +8,5 @@ public enum SagaStatus {
     FAILED,
     COMPENSATED_FAILED,
     COMPENSATED,
+    COMPENSATING
 }

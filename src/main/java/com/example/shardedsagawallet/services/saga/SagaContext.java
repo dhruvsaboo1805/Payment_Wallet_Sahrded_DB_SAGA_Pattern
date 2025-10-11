@@ -10,9 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @Builder
-@AllArgsConstructor
+@NoArgsConstructor
 public class SagaContext {
 
     private Map<String, Object> data;

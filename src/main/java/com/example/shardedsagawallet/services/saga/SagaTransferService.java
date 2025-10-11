@@ -2,6 +2,7 @@ package com.example.shardedsagawallet.services.saga;
 
 import com.example.shardedsagawallet.entities.Transaction;
 import com.example.shardedsagawallet.repositories.TransactionRepository;
+import com.example.shardedsagawallet.services.saga.steps.SagaStepFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,23 +46,16 @@ public class SagaTransferService {
         return sagaInstanceId;
     }
 
-    public void executeTransferSaga(Long sagaInstanceId) {
+    public void executeTransferSaga(Long sagaInstanceId) throws JsonProcessingException {
         log.info("Executing transfer saga with id {}", sagaInstanceId);
-
-        List<String> stepNames = new ArrayList<>();
-        stepNames.add("DebitSourceWallet");
-        stepNames.add("CreditDestinationWalletStep");
-        stepNames.add("UpdateTransactionStatus");
-
         try {
-            for(String step : stepNames) {
-                boolean success  = sagaOrchastration.executeStep(sagaInstanceId, step );
-                if(!success) {
-                    log.error("Failed to execute step {}", step);
+            for (SagaStepFactory.SagaStepType step : SagaStepFactory.TransferMoneySagaSteps) {
+                boolean success = sagaOrchastration.executeStep(sagaInstanceId, step.toString());
+                if (!success) {
+                    log.error("Failed to execute step {}", step.toString());
                     sagaOrchastration.failSaga(sagaInstanceId);
                     return;
                 }
-
             }
             sagaOrchastration.completeSaga(sagaInstanceId);
             log.info("Transfer saga completed with id {}", sagaInstanceId);

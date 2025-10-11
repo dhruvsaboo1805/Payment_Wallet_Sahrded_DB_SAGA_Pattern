@@ -1,24 +1,19 @@
 package com.example.shardedsagawallet.entities;
 import com.example.shardedsagawallet.enums.SagaStatus;
 import com.example.shardedsagawallet.services.saga.SagaContext;
+import jakarta.persistence.*;
+import lombok.Builder;
 import org.apache.calcite.model.JsonType;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "saga_instance")
@@ -35,7 +30,31 @@ public class SagaInstance {
     @Column(name = "context", columnDefinition = "json")
     private String context;
 
-    @Column(name = "current_step", nullable = false)
+    @Column(name = "current_step")
     private String currentStep;
+
+    public void markAsStarted() {
+        this.status = SagaStatus.STARTED;
+    }
+
+    public void markAsRunning() {
+        this.status = SagaStatus.RUNNING;
+    }
+
+    public void markAsCompleted() {
+        this.status = SagaStatus.COMPLETED;
+    }
+
+    public void markAsFailed() {
+        this.status = SagaStatus.FAILED;
+    }
+
+    public void markAsCompensating() {
+        this.status = SagaStatus.COMPENSATING;
+    }
+
+    public void markAsCompensated() {
+        this.status = SagaStatus.COMPENSATED;
+    }
 
 }

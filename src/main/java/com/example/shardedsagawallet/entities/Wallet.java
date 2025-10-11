@@ -18,9 +18,9 @@ public class Wallet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", updatable = false, nullable = false)
     private Long userId;
 
     @Column(name = "is_active", nullable = false)
