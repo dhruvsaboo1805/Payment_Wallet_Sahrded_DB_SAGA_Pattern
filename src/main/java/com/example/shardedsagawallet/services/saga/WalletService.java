@@ -41,7 +41,10 @@ public class WalletService {
     public void debit(Long userId, BigDecimal amount) {
         log.info("Debiting {} from wallet {}", amount, userId);
         Wallet wallet = getWalletByUserId(userId);
-        walletRepository.updateBalanceByUserId(userId, wallet.getBalance().subtract(amount));
+        // correcting the mistake for the updation of balance in user response too.
+        BigDecimal oldBalance = wallet.getBalance();
+        wallet.setBalance(oldBalance.subtract(amount));
+        walletRepository.save(wallet);
         log.info("Debit successful for wallet {}", wallet.getId());
     }
 
@@ -54,7 +57,10 @@ public class WalletService {
     public void credit(Long userId, BigDecimal amount) {
         log.info("Crediting {} to wallet {}", amount, userId);
         Wallet wallet = getWalletByUserId(userId);
-        walletRepository.updateBalanceByUserId(userId, wallet.getBalance().add(amount));
+        // correcting the mistake for the updation of balance in user response too.
+        BigDecimal oldBalance = wallet.getBalance();
+        wallet.setBalance(oldBalance.add(amount));
+        walletRepository.save(wallet);
         log.info("Credit successful for wallet {}", wallet.getId());
     }
 
