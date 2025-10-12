@@ -1,9 +1,20 @@
 package com.example.shardedsagawallet.services.saga;
 
+import java.net.SocketTimeoutException;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 import com.example.shardedsagawallet.enums.SagaStatus;
 import com.example.shardedsagawallet.enums.StepStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.support.RetrySynchronizationManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.client.ResourceAccessException;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +65,21 @@ public class SagaOrchastrationImpl implements  SagaOrchastration {
 
     @Override
     @Transactional
+    @Retryable(
+            value = {
+                    SQLException.class,                     // General SQL issue, often temporary
+                    CannotAcquireLockException.class,       // Couldn't get a DB lock, good to retry
+                    DataAccessResourceFailureException.class, // Can't connect to the data source
+                    OptimisticLockingFailureException.class,// Two transactions collided, one should retry
+                    SocketTimeoutException.class,           // Waited too long for a response from another service
+                    ResourceAccessException.class           // Generic network issue using Spring's RestTemplate/WebClient (e.g., connection refused) },
+            },
+            maxAttempts = 3, // 2. Try a total of 3 times
+            backoff = @Backoff(delay = 2000, multiplier = 2) // 3. Wait 2s, then 4s
+    )
     public boolean executeStep(Long sagaInstanceId, String stepName) {
+        log.info("retry count" + Objects.requireNonNull(RetrySynchronizationManager.getContext()).getRetryCount());
+        log.info("throw RuntimeException in method retryService()");
         SagaInstance sagaInstance = sagaInstanceRepository.findById(sagaInstanceId).orElseThrow(() -> new RuntimeException("Saga instance not found"));
 
         SagaStep step = sagaStepFactory.getSagaStep(stepName);
@@ -102,6 +128,12 @@ public class SagaOrchastrationImpl implements  SagaOrchastration {
             log.error("Failed to execute step {}", stepName);
             return false;
         }
+    }
+    @Recover
+    public void recover(Exception e, Long sagaInstanceId) throws JsonProcessingException {
+        log.error("All retries failed for saga id: {}. Moving saga to FAILED state. Error: {}", sagaInstanceId, e.getMessage());
+        // This is your fallback logic. Mark the saga as permanently failed.
+        failSaga(sagaInstanceId);
     }
 
     @Override
@@ -177,7 +209,6 @@ public class SagaOrchastrationImpl implements  SagaOrchastration {
                 allCompensated = false;
             }
         }
-        // Todo: make the compensations go in parallel
 
         if(allCompensated) {
             sagaInstance.markAsCompensated();
